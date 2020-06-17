@@ -19,7 +19,7 @@ class UI {
         //submit budget method
     submitBudgetForm() {
             const value = this.budgetInput.value;
-            if (value === '' || value < 1) {
+            if (value === '' || value < 0) {
                 this.budgetFeedback.classList.add('showItem');
                 this.budgetFeedback.innerHTML = `<p> value cannot be empty or negative</p>`;
                 // this === UI 
@@ -39,14 +39,14 @@ class UI {
     showBalance() {
         const expense = this.totalExpense();
         const total = parseInt(this.budgetAmount.textContent) - expense;
-        this.balanceAmount.text = total;
+        this.balanceAmount.textContent = total;
         if (total < 0) {
             this.balance.classList.remove('showGreen', 'showBlack');
             this.balance.classList.add('showRed');
         } else if (total > 0) {
             this.balance.classList.remove('showRed', 'showBlack');
             this.balance.classList.add('showGreen');
-        } else {
+        } else if (total === 0) {
             this.balance.classList.remove('showRed', 'showGreen');
             this.balance.classList.add('showBlack');
         }
@@ -71,12 +71,12 @@ class UI {
                 let expense = {
                     id: this.itemID,
                     title: expenseValue,
-                    amount: amount,
+                    amount: amount
                 }
                 this.itemID++;
                 this.itemList.push(expense);
                 this.addExpense(expense);
-                // show balance
+                this.showBalance();
             }
         }
         //add expense
@@ -102,8 +102,49 @@ class UI {
         }
         //total expense
     totalExpense() {
-        let total = 400;
-        return total;
+            let total = 0;
+            if (this.itemList.length > 0) {
+                total = this.itemList.reduce((acc, curr) => {
+                    acc += curr.amount;
+                    return acc;
+                }, 0)
+
+            }
+            this.expenseAmount.textContent = total;
+            return total;
+        }
+        //edit expense
+    editExpense(element) {
+            let id = parseInt(element.dataset.id);
+            let parent = element.parentElement.parentElement.parentElement;
+            //remove from dom
+            this.expenseList.removeChild(parent);
+            //remove from the dom
+            let expense = this.itemList.filter((item) => {
+                return item.id === id;
+            });
+            //show value
+            this.expenseInput.value = expense[0].title;
+            this.amountInput.value = expense[0].amount;
+            //remove from the list
+            let tempList = this.itemList.filter((item) => {
+                return item.id !== id;
+            })
+            this.itemList = tempList;
+            this.showBalance();
+        }
+        //remove expense
+    deleteExpense(element) {
+        let id = parseInt(element.dataset.id);
+        let parent = element.parentElement.parentElement.parentElement;
+        //remove from dom
+        this.expenseList.removeChild(parent);
+        //remove from the list
+        let tempList = this.itemList.filter((item) => {
+            return item.id !== id;
+        });
+        this.itemList = tempList;
+        this.showBalance();
     }
 }
 
@@ -125,9 +166,13 @@ function eventListeners() {
             event.preventDefault();
             ui.submitExpenseForm();
         })
-        // expense list submit
+        // expense click
     expenseList.addEventListener('click', function(event) {
-
+        if (event.target.parentElement.classList.contains('edit-icon')) {
+            ui.editExpense(event.target.parentElement)
+        } else if (event.target.parentElement.classList.contains('edit-icon')) {
+            ui.deleteExpense(event.target.parentElement)
+        }
     })
 }
 
